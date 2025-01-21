@@ -1,15 +1,9 @@
-import fs from "fs/promises";
-import path from "path";
 import { open } from "sqlite";
 import sqlite3 from "sqlite3";
 
 let dbInstance = null;
 
 export async function initDb() {
-  const dbDir = path.dirname("db/database.sqlite");
-  if (!fs.access(dbDir)) {
-    await fs.mkdir(dbDir, { recursive: true });
-  }
   dbInstance = await open({
     filename: "db/database.sqlite",
     driver: sqlite3.Database,
