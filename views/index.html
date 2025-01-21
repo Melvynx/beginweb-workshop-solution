@@ -4,6 +4,43 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>QuoiManger</title>
+    <link rel="stylesheet" href="style.css" />
   </head>
-  <body></body>
+  <body>
+    <div class="cards">
+      <div class="card-container left">
+        <button id="left-card" class="card">
+          <img
+            id="left-image"
+            src="https://www.themealdb.com/images/media/meals/x0lk931587671540.jpg"
+          />
+          <div class="text">
+            <h2 id="left-title">Title</h2>
+            <p id="left-subtitle">Subtitle</p>
+          </div>
+        </button>
+      </div>
+      <div class="card-container right">
+        <button id="right-card" class="card">
+          <img
+            id="right-image"
+            src="https://www.themealdb.com/images/media/meals/x0lk931587671540.jpg"
+          />
+          <div class="text">
+            <h2 id="right-title">Title</h2>
+            <p id="right-subtitle">Subtitle</p>
+          </div>
+        </button>
+      </div>
+    </div>
+    <div class="actions">
+      <button id="left-btn">left</button>
+      <button id="right-btn">right</button>
+      <button id="next-btn" class="hidden">next</button>
+    </div>
+
+    <div class="loader" id="loader">Loading...</div>
+
+    <script src="script.js"></script>
+  </body>
 </html>
