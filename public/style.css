@@ -110,3 +110,16 @@ button:active {
   display: flex;
   gap: 8px;
 }
+
+.loader {
+  position: absolute;
+  background: white;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.hidden {
+  display: none;
+}

@@ -1,4 +1,5 @@
 import bodyParser from "body-parser";
+import crypto from "crypto";
 import express from "express";
 import path from "path";
 import { fileURLToPath } from "url";
@@ -19,21 +20,41 @@ app.get("/", (req, res) => {
   res.sendFile(indexPath);
 });
 
+function hash(str) {
+  return crypto
+    .createHash("md5")
+    .update("111" + str)
+    .digest("hex");
+}
+function getClientIp(req) {
+  return hash(req.headers["x-forwarded-for"] || req.socket.remoteAddress);
+}
+
 function getRandomArbitrary(min, max) {
   return Math.floor(Math.random() * (max - min) + min);
 }
 
 app.get("/api/challenges/random", async (req, res) => {
   const db = await getDb();
-  const challengesCount = await db.get(
-    "SELECT COUNT(*) as count FROM challenges"
+  const ip_hash = getClientIp(req);
+  let challenge = await db.get(
+    `SELECT challenges.* FROM challenges
+WHERE NOT EXISTS 
+(
+  SELECT 1 FROM votes 
+  WHERE votes.challenge_id = challenges.id 
+  AND votes.ip_address_hash = ?
+)
+ORDER BY RANDOM()
+LIMIT 1;`,
+    [ip_hash]
   );
-  const index = getRandomArbitrary(0, challengesCount.count);
 
-  const challenge = await db.get(
-    "SELECT * FROM challenges ORDER BY created_at LIMIT 1 OFFSET ?",
-    [index]
-  );
+  if (!challenge) {
+    challenge = await db.get(
+      `SELECT challenges.* FROM challenges ORDER BY RANDOM() LIMIT 1;`
+    );
+  }
 
   res.json(challenge);
 });
@@ -41,6 +62,7 @@ app.get("/api/challenges/random", async (req, res) => {
 app.post("/api/challenges/:challengeId/votes", async (req, res) => {
   const body = req.body;
   const choice = body.choice;
+  const ip_hash = getClientIp(req);
   const { challengeId } = req.params;
 
   if (choice !== "right" && choice !== "left") {
@@ -50,14 +72,20 @@ app.post("/api/challenges/:challengeId/votes", async (req, res) => {
   }
 
   const db = await getDb();
-  db.run(
-    `INSERT INTO votes (challenge_id, ip_address_hash, choice) VALUES (?, ?, ?)`,
-    [
-      challengeId,
-      Math.random().toString(), // TODO : Update this
-      choice,
-    ]
+
+  const alreadyCreatedVote = await db.get(
+    "SELECT ip_address_hash FROM votes WHERE ip_address_hash = ? AND challenge_id = ?",
+    [ip_hash, challengeId]
   );
+
+  console.log({ alreadyCreatedVote });
+
+  if (!alreadyCreatedVote?.ip_address_hash) {
+    db.run(
+      `INSERT INTO votes (challenge_id, ip_address_hash, choice) VALUES (?, ?, ?)`,
+      [challengeId, ip_hash, choice]
+    );
+  }
 
   const result = await db.get(
     `SELECT 
